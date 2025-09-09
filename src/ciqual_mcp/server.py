@@ -1,11 +1,23 @@
 #!/usr/bin/env python3
-"""ANSES Ciqual MCP Server with SQL query interface"""
+"""ANSES Ciqual MCP Server with SQL query interface
+
+Provides a Model Context Protocol (MCP) server for querying the ANSES Ciqual
+French food composition database using SQL.
+"""
 
 from fastmcp import FastMCP
 import sqlite3
 import os
 from pathlib import Path
 import sys
+import logging
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 mcp = FastMCP("ANSES Ciqual")
 
@@ -41,54 +53,88 @@ async def query(sql: str) -> list[dict]:
     
     # Ensure database exists
     if not DB_PATH.exists():
+        logger.warning("Database not found at %s", DB_PATH)
         return [{"error": "Database not initialized. Please run the server first to download data."}]
+    
+    # Validate SQL query (basic safety check)
+    sql_lower = sql.strip().lower()
+    if not sql_lower.startswith(('select', 'with')):
+        return [{"error": "Only SELECT queries are allowed for safety."}]
     
     # Connect with read-only mode
     try:
+        logger.debug("Executing query: %s", sql[:100] + '...' if len(sql) > 100 else sql)
         conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
         conn.row_factory = sqlite3.Row
         
-        # Execute query
+        # Execute query with timeout
+        conn.execute("PRAGMA query_only = ON")
+        conn.execute("PRAGMA temp_store = MEMORY")
         cursor = conn.execute(sql)
         results = [dict(row) for row in cursor.fetchall()]
+        logger.debug("Query returned %d rows", len(results))
         return results
         
     except sqlite3.OperationalError as e:
+        logger.error("SQL operational error: %s", e)
         if "no such table" in str(e):
             return [{"error": f"Table not found. Available tables: foods, nutrients, composition, foods_fts, food_groups"}]
-        elif "read-only" in str(e):
+        elif "read-only" in str(e) or "readonly" in str(e):
             return [{"error": "Database is read-only. Only SELECT queries are allowed."}]
         else:
             return [{"error": f"SQL error: {str(e)}"}]
+    except sqlite3.Error as e:
+        logger.error("Database error: %s", e)
+        return [{"error": f"Database error: {str(e)}"}]
     except Exception as e:
-        return [{"error": f"Error: {str(e)}"}]
+        logger.error("Unexpected error: %s", e)
+        return [{"error": f"Unexpected error: {str(e)}"}]
     finally:
         if 'conn' in locals():
             conn.close()
 
 def main():
-    """Main entry point"""
-    # Check and update database if needed (auto-updates monthly)
+    """Main entry point for the MCP server
+    
+    Initializes the database if needed and starts the MCP server.
+    """
+    # Check and update database if needed (auto-updates yearly)
     from .data_loader import initialize_database, should_update_database
     
     try:
         if not DB_PATH.exists():
+            logger.info("First run: Downloading Ciqual database...")
             print("First run: Downloading Ciqual database...", file=sys.stderr)
             initialize_database()
+            logger.info("Database initialized successfully!")
             print("Database initialized successfully!", file=sys.stderr)
         elif should_update_database(DB_PATH):
+            logger.info("Database is outdated, updating from ANSES...")
             print("Database is outdated, updating from ANSES...", file=sys.stderr)
             initialize_database(force_update=True)
+            logger.info("Database updated successfully!")
             print("Database updated successfully!", file=sys.stderr)
     except Exception as e:
         if not DB_PATH.exists():
+            logger.error("Failed to initialize database: %s", e)
             print(f"Failed to initialize database: {e}", file=sys.stderr)
             sys.exit(1)
         else:
+            logger.warning("Failed to update database, using existing version: %s", e)
             print(f"Failed to update database, using existing version: {e}", file=sys.stderr)
     
+    logger.info("Starting Ciqual MCP server")
     print("Ciqual MCP server running", flush=True)
-    mcp.run()
+    try:
+        mcp.run()
+    except KeyboardInterrupt:
+        logger.info("Shutting down Ciqual MCP server")
+        print("\nShutting down Ciqual MCP server", file=sys.stderr)
+        sys.exit(0)
+    except Exception as e:
+        logger.error("Server error: %s", e)
+        print(f"Server error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

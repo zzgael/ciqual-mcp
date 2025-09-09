@@ -1,4 +1,8 @@
-"""Data loader for importing Ciqual XML data into SQLite"""
+"""Data loader for importing Ciqual XML data into SQLite
+
+Handles downloading, parsing, and importing ANSES Ciqual data from XML files
+into a local SQLite database with proper indexing and FTS support.
+"""
 
 import sqlite3
 try:
@@ -15,7 +19,18 @@ import shutil
 from .database import SCHEMA_SQL
 
 def extract_unit(nutrient_name):
-    """Extract unit from nutrient name (e.g., 'Calcium (mg/100g)' -> 'mg/100g')"""
+    """Extract unit from nutrient name
+    
+    Args:
+        nutrient_name: Nutrient name possibly containing unit in parentheses
+        
+    Returns:
+        Extracted unit string (e.g., 'mg/100g') or None
+        
+    Example:
+        >>> extract_unit('Calcium (mg/100g)')
+        'mg/100g'
+    """
     if not nutrient_name:
         return None
     match = re.search(r'\(([^)]+/100\s?g)\)', nutrient_name)
@@ -24,7 +39,14 @@ def extract_unit(nutrient_name):
     return None
 
 def clean_text(text):
-    """Clean and normalize text values"""
+    """Clean and normalize text values
+    
+    Args:
+        text: Raw text value from XML
+        
+    Returns:
+        Cleaned text or None for empty/missing values
+    """
     if text is None:
         return None
     text = text.strip()
@@ -33,7 +55,18 @@ def clean_text(text):
     return text
 
 def parse_number(value):
-    """Parse a number from French format (comma as decimal separator)"""
+    """Parse a number from French format
+    
+    Args:
+        value: Number string with comma as decimal separator
+        
+    Returns:
+        Float value or None for invalid/missing values
+        
+    Note:
+        Handles French decimal format (comma instead of dot)
+        Returns None for special values like '-', 'traces'
+    """
     if value is None or value.strip() in ["", "-", "traces"]:
         return None
     try:
@@ -43,17 +76,39 @@ def parse_number(value):
         return None
 
 def should_update_database(db_path):
-    """Check if database needs updating (older than 30 days or doesn't exist)"""
+    """Check if database needs updating
+    
+    Args:
+        db_path: Path to the SQLite database file
+        
+    Returns:
+        True if database needs update (older than 365 days or doesn't exist)
+        
+    Note:
+        Uses 365-day cache since ANSES data hasn't been updated since 2020
+    """
     if not db_path.exists():
         return True
     
     # Check last modified time
     import time
     db_age_days = (time.time() - db_path.stat().st_mtime) / (24 * 3600)
-    return db_age_days > 30  # Update monthly
+    return db_age_days > 365  # Update yearly (data hasn't changed since 2020)
 
 def initialize_database(force_update=False):
-    """Download and import Ciqual data into SQLite database"""
+    """Download and import Ciqual data into SQLite database
+    
+    Args:
+        force_update: Force database update even if cache is valid
+        
+    Raises:
+        Exception: If data download or import fails and no existing database
+        
+    Note:
+        Creates database at ~/.ciqual/ciqual.db
+        Downloads ~10MB of XML data from ANSES
+        Results in ~10MB SQLite database with 3000+ foods
+    """
     
     # Setup paths
     db_path = Path.home() / ".ciqual" / "ciqual.db"
@@ -68,10 +123,10 @@ def initialize_database(force_update=False):
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
         
-        print("Downloading Ciqual data from data.gouv.fr...")
+        print("Downloading Ciqual data from ANSES...")
         
-        # Download French XML data (contains all the data we need)
-        xml_url = "https://www.data.gouv.fr/fr/datasets/r/e31dd87c-8ad0-43e4-bdaa-af84ad243dc6"
+        # Download XML data directly from ANSES
+        xml_url = "https://ciqual.anses.fr/cms/sites/default/files/inline-files/XML_2020_07_07.zip"
         
         zip_path = temp_path / "ciqual.zip"
         with urllib.request.urlopen(xml_url) as response:
@@ -227,16 +282,19 @@ def initialize_database(force_update=False):
             
             # Populate FTS table
             print("Building full-text search index...")
-            cursor.execute("DELETE FROM foods_fts")
-            cursor.execute("INSERT INTO foods_fts SELECT alim_code, alim_nom_fr, alim_nom_eng FROM foods")
+            try:
+                conn.execute("DELETE FROM foods_fts")
+            except:
+                pass  # Table might not exist or be empty
+            conn.execute("INSERT INTO foods_fts SELECT alim_code, alim_nom_fr, alim_nom_eng FROM foods")
             
             # Commit and optimize
             conn.commit()
             
             # Verify data was loaded
-            food_count = cursor.execute("SELECT COUNT(*) FROM foods").fetchone()[0]
-            nutrient_count = cursor.execute("SELECT COUNT(*) FROM nutrients").fetchone()[0]
-            comp_count = cursor.execute("SELECT COUNT(*) FROM composition").fetchone()[0]
+            food_count = conn.execute("SELECT COUNT(*) FROM foods").fetchone()[0]
+            nutrient_count = conn.execute("SELECT COUNT(*) FROM nutrients").fetchone()[0]
+            comp_count = conn.execute("SELECT COUNT(*) FROM composition").fetchone()[0]
             
             print(f"Database initialization complete!")
             print(f"  - {food_count} foods")

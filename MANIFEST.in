@@ -1,0 +1,9 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+recursive-include src *.py
+recursive-include tests *.py
+global-exclude *.pyc
+global-exclude __pycache__
+global-exclude *.db
+global-exclude *.sqlite*

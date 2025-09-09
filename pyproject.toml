@@ -1,15 +1,42 @@
 [project]
 name = "ciqual-mcp"
 version = "0.1.0"
-description = "MCP server for ANSES Ciqual food composition database"
+description = "MCP server for ANSES Ciqual French food composition database with SQL interface"
 readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.9"
 authors = [
-    {name = "GPT Workbench", email = "contact@gpt-workbench.com"}
+    {name = "GPT Workbench Team", email = "contact@gpt-workbench.com"}
+]
+keywords = ["mcp", "ciqual", "anses", "nutrition", "food", "database", "sql"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 dependencies = [
     "fastmcp>=0.1.0",
+    "lxml>=4.9.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/gpt-workbench/ciqual-mcp"
+"Bug Reports" = "https://github.com/gpt-workbench/ciqual-mcp/issues"
+"Source" = "https://github.com/gpt-workbench/ciqual-mcp"
 
 [project.scripts]
 ciqual-mcp = "ciqual_mcp.server:main"

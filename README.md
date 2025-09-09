@@ -1,5 +1,9 @@
 # ANSES Ciqual MCP Server
 
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![MCP Protocol](https://img.shields.io/badge/MCP-1.0-green.svg)](https://modelcontextprotocol.io/)
+
 An MCP (Model Context Protocol) server providing SQL access to the ANSES Ciqual French food composition database. Query nutritional data for over 3,000 foods with full-text search support.
 
 ## Features
@@ -9,7 +13,7 @@ An MCP (Model Context Protocol) server providing SQL access to the ANSES Ciqual 
 - 🌍 **Bilingual Support**: French and English food names
 - 🔤 **Fuzzy Search**: Built-in full-text search with typo tolerance
 - 📊 **60+ Nutrients**: Detailed composition including vitamins, minerals, macros, and more
-- 🔄 **Auto-Updates**: Automatically refreshes data monthly from ANSES
+- 🔄 **Auto-Updates**: Automatically refreshes data yearly from ANSES (checks on startup)
 - 🔒 **Read-Only**: Safe queries with no risk of data modification
 - 💾 **Lightweight**: ~10MB SQLite database with efficient indexing
 
@@ -168,7 +172,13 @@ Data is sourced from the official ANSES Ciqual database:
 - Website: https://ciqual.anses.fr/
 - Data portal: https://www.data.gouv.fr/fr/datasets/table-de-composition-nutritionnelle-des-aliments-ciqual/
 
-The database is automatically updated monthly when the server starts.
+The database is automatically updated yearly when the server starts (data hasn't changed since 2020, so yearly updates are sufficient).
+
+## Requirements
+
+- Python 3.9 or higher
+- 50MB free disk space (for database)
+- Internet connection (for initial data download)
 
 ## License
 
@@ -178,8 +188,58 @@ MIT License - See LICENSE file for details
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+## Development
+
+### Running Tests
+
+```bash
+# Install development dependencies
+pip install -e .
+pip install pytest pytest-asyncio
+
+# Run unit tests
+python -m pytest tests/test_server.py -v
+
+# Run functional tests (requires database)
+python -m pytest tests/test_functional.py -v
+```
+
+### Building for Distribution
+
+```bash
+# Build the package
+python -m build
+
+# Upload to PyPI
+python -m twine upload dist/*
+```
+
+## Troubleshooting
+
+### Database not initializing
+- Check internet connection
+- Ensure write permissions to `~/.ciqual/` directory
+- Try manual initialization: `python -m ciqual_mcp.data_loader`
+
+### XML parsing errors
+- The tool handles malformed XML automatically with recovery mode
+- If issues persist, delete `~/.ciqual/ciqual.db` and restart
+
 ## Credits
 
 Developed by [GPT Workbench](https://github.com/gpt-workbench) team.
 
 Data provided by ANSES (Agence nationale de sécurité sanitaire de l'alimentation, de l'environnement et du travail).
+
+## Citation
+
+If you use this tool in your research, please cite:
+
+```bibtex
+@software{ciqual_mcp,
+  title = {ANSES Ciqual MCP Server},
+  author = {GPT Workbench Team},
+  year = {2024},
+  url = {https://github.com/gpt-workbench/ciqual-mcp}
+}
+```
