@@ -1,0 +1,19 @@
+[project]
+name = "ciqual-mcp"
+version = "0.1.0"
+description = "MCP server for ANSES Ciqual food composition database"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    {name = "GPT Workbench", email = "contact@gpt-workbench.com"}
+]
+dependencies = [
+    "fastmcp>=0.1.0",
+]
+
+[project.scripts]
+ciqual-mcp = "ciqual_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
