@@ -10,9 +10,9 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from ciqual_mcp.database import SCHEMA_SQL
-from ciqual_mcp.server import query
-import ciqual_mcp.server as server
+from database import SCHEMA_SQL
+from server import query
+import server
 
 class TestCiqualFunctional(unittest.TestCase):
     

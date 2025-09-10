@@ -6,12 +6,12 @@ import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from ciqual_mcp.server import query
-from ciqual_mcp.data_loader import clean_text, parse_number, extract_unit
+from server import query
+from data_loader import clean_text, parse_number, extract_unit
 
 class TestCiqualServer(unittest.TestCase):
     
-    @patch('ciqual_mcp.server.DB_PATH')
+    @patch('server.DB_PATH')
     @patch('sqlite3.connect')
     async def test_query_success(self, mock_connect, mock_db_path):
         """Test successful SQL query execution"""
@@ -36,7 +36,7 @@ class TestCiqualServer(unittest.TestCase):
         self.assertEqual(result[0]['alim_code'], 1234)
         mock_conn.execute.assert_called_once_with("SELECT * FROM foods WHERE alim_code = 1234")
     
-    @patch('ciqual_mcp.server.DB_PATH')
+    @patch('server.DB_PATH')
     async def test_query_no_database(self, mock_db_path):
         """Test query when database doesn't exist"""
         mock_db_path.exists.return_value = False
@@ -47,7 +47,7 @@ class TestCiqualServer(unittest.TestCase):
         self.assertIn('error', result[0])
         self.assertIn('not initialized', result[0]['error'])
     
-    @patch('ciqual_mcp.server.DB_PATH')
+    @patch('server.DB_PATH')
     @patch('sqlite3.connect')
     async def test_query_read_only_protection(self, mock_connect, mock_db_path):
         """Test that write queries are blocked"""
