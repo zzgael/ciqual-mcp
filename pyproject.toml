@@ -39,7 +39,7 @@ dev = [
 "Source" = "https://github.com/gpt-workbench/ciqual-mcp"
 
 [project.scripts]
-ciqual-mcp = "ciqual_mcp.server:main"
+ciqual-mcp = "server:main"
 
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]

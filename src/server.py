@@ -99,7 +99,7 @@ def main():
     Initializes the database if needed and starts the MCP server.
     """
     # Check and update database if needed (auto-updates yearly)
-    from .data_loader import initialize_database, should_update_database
+    from data_loader import initialize_database, should_update_database
     
     try:
         if not DB_PATH.exists():

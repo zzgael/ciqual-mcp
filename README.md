@@ -1,12 +1,16 @@
 # ANSES Ciqual MCP Server
 
-![ANSES Ciqual Database](assets/ciqual-banner.jpg)
+<div align="center">
 
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Protocol](https://img.shields.io/badge/MCP-1.0-green.svg)](https://modelcontextprotocol.io/)
 
 An MCP (Model Context Protocol) server providing SQL access to the ANSES Ciqual French food composition database. Query nutritional data for over 3,000 foods with full-text search support.
+
+![ANSES Ciqual Database](assets/ciqual-banner.jpg)
+
+</div>
 
 ## Features
 
