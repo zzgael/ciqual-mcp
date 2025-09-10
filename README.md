@@ -2,6 +2,8 @@
 
 <div align="center">
 
+[![Tests](https://github.com/zzgael/ciqual-mcp/actions/workflows/tests.yml/badge.svg)](https://github.com/zzgael/ciqual-mcp/actions/workflows/tests.yml)
+[![PyPI version](https://badge.fury.io/py/ciqual-mcp.svg)](https://badge.fury.io/py/ciqual-mcp)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![MCP Protocol](https://img.shields.io/badge/MCP-1.0-green.svg)](https://modelcontextprotocol.io/)
