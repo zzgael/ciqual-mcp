@@ -31,9 +31,81 @@ uvx ciqual-mcp
 
 ### From source
 ```bash
-git clone https://github.com/gpt-workbench/ciqual-mcp.git
+git clone https://github.com/zzgael/ciqual-mcp.git
 cd ciqual-mcp
 pip install -e .
+```
+
+## MCP Client Configuration
+
+### Claude Desktop
+
+Add to your Claude Desktop configuration:
+
+**macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`  
+**Windows**: `%APPDATA%/Claude/claude_desktop_config.json`  
+**Linux**: `~/.config/Claude/claude_desktop_config.json`
+
+```json
+{
+  "mcpServers": {
+    "ciqual": {
+      "command": "uvx",
+      "args": ["ciqual-mcp"]
+    }
+  }
+}
+```
+
+### Zed
+
+Add to your Zed settings:
+
+```json
+{
+  "assistant": {
+    "version": "2",
+    "mcp": {
+      "servers": {
+        "ciqual": {
+          "command": "uvx",
+          "args": ["ciqual-mcp"]
+        }
+      }
+    }
+  }
+}
+```
+
+### Cline (VSCode Extension)
+
+Add to your VSCode settings (`settings.json`):
+
+```json
+{
+  "cline.mcpServers": {
+    "ciqual": {
+      "command": "uvx",
+      "args": ["ciqual-mcp"]
+    }
+  }
+}
+```
+
+### Continue.dev
+
+Add to your Continue config (`~/.continue/config.json`):
+
+```json
+{
+  "mcpServers": [
+    {
+      "name": "ciqual",
+      "command": "uvx",
+      "args": ["ciqual-mcp"]
+    }
+  ]
+}
 ```
 
 ## Usage
@@ -42,8 +114,8 @@ pip install -e .
 
 The server implements the Model Context Protocol and exposes a single `query` function:
 
-```python
-# Start the server
+```bash
+# Start the server standalone (for testing)
 ciqual-mcp
 ```
 
