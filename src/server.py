@@ -27,8 +27,17 @@ DB_PATH = Path.home() / ".ciqual" / "ciqual.db"
 async def query(sql: str) -> list[dict]:
     """Execute SQL query on ANSES Ciqual French food composition database.
     
+    IMPORTANT: Get ALL nutrients in ONE query! Don't make multiple queries for the same food.
+    
+    EXAMPLE - Get complete nutrition for a food:
+    SELECT f.alim_nom_eng, n.const_nom_eng, c.teneur, n.unit
+    FROM foods f
+    JOIN composition c ON f.alim_code = c.alim_code
+    JOIN nutrients n ON c.const_code = n.const_code
+    WHERE f.alim_code = 23000;  -- Returns ALL 60+ nutrients in one query!
+    
     SCHEMA:
-    • foods: thousands of foods with French/English names
+    • foods: 3,185+ foods with French/English names
       - alim_code (PK), alim_nom_fr, alim_nom_eng, alim_grp_code
     
     • nutrients: ~60+ nutrients with units
@@ -40,13 +49,16 @@ async def query(sql: str) -> list[dict]:
     • foods_fts: full-text search for fuzzy matching
       - Use: WHERE foods_fts MATCH 'search term'
     
+    COMMON QUERIES:
+    1. Search foods: SELECT * FROM foods_fts WHERE foods_fts MATCH 'cake';
+    2. Get ALL nutrients: JOIN all 3 tables, no WHERE clause on nutrients
+    3. Get specific nutrients: Use IN clause with multiple codes at once
+    
     KEY NUTRIENT CODES:
     Energy: 327 (kJ), 328 (kcal)
     Macros: 25000 (protein g), 31000 (carbs g), 40000 (fat g), 34100 (fiber g), 32000 (sugars g)
-    Minerals: 10110 (sodium mg), 10200 (calcium mg), 10260 (iron mg), 10190 (potassium mg), 10120 (magnesium mg), 10300 (zinc mg)
-    Vitamins: 55400 (vit C mg), 56400 (vit D µg), 51330 (vit B12 µg), 56310 (vit E mg), 56700 (vit K µg), 51200 (vit B6 mg)
-    Lipids: 40302 (saturated g), 40303 (monounsaturated g), 40304 (polyunsaturated g), 40400 (cholesterol mg)
-    Sugars: 18601 (lactose g), 18604 (sucrose g), 18605 (glucose g), 18606 (fructose g)
+    Minerals: 10110 (sodium mg), 10200 (calcium mg), 10260 (iron mg), 10190 (potassium mg)
+    Vitamins: 55400 (vit C mg), 56400 (vit D µg), 51330 (vit B12 µg), 56310 (vit E mg)
     
     The database is read-only. Use SELECT queries only.
     """
