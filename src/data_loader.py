@@ -16,7 +16,7 @@ import io
 import re
 import tempfile
 import shutil
-from .database import SCHEMA_SQL
+from database import SCHEMA_SQL
 
 def extract_unit(nutrient_name):
     """Extract unit from nutrient name
