@@ -6,7 +6,7 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
-    {name = "GPT Workbench Team", email = "contact@gpt-workbench.com"}
+    {name = "Gael Debost", email = "gael@ideagency.fr"}
 ]
 keywords = ["mcp", "ciqual", "anses", "nutrition", "food", "database", "sql"]
 classifiers = [
@@ -33,9 +33,9 @@ dev = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/gpt-workbench/ciqual-mcp"
-"Bug Reports" = "https://github.com/gpt-workbench/ciqual-mcp/issues"
-"Source" = "https://github.com/gpt-workbench/ciqual-mcp"
+"Homepage" = "https://github.com/zzgael/ciqual-mcp"
+"Bug Reports" = "https://github.com/zzgael/ciqual-mcp/issues"
+"Source" = "https://github.com/zzgael/ciqual-mcp"
 
 [project.scripts]
 ciqual-mcp = "server:main"

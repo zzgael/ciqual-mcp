@@ -284,15 +284,6 @@ python -m pytest tests/test_server.py -v
 python -m pytest tests/test_functional.py -v
 ```
 
-### Building for Distribution
-
-```bash
-# Build the package
-python -m build
-
-# Upload to PyPI
-python -m twine upload dist/*
-```
 
 ## Troubleshooting
 
@@ -307,7 +298,7 @@ python -m twine upload dist/*
 
 ## Credits
 
-Developed by [GPT Workbench](https://github.com/gpt-workbench) team.
+Developed by **Gael Debost** as part of a multi-LLM interface for medical research developed by [Ideagency](https://ideagency.fr).
 
 Data provided by ANSES (Agence nationale de sécurité sanitaire de l'alimentation, de l'environnement et du travail).
 
@@ -318,8 +309,8 @@ If you use this tool in your research, please cite:
 ```bibtex
 @software{ciqual_mcp,
   title = {ANSES Ciqual MCP Server},
-  author = {GPT Workbench Team},
-  year = {2024},
-  url = {https://github.com/gpt-workbench/ciqual-mcp}
+  author = {Gael Debost},
+  year = {2025},
+  url = {https://github.com/zzgael/ciqual-mcp}
 }
 ```
