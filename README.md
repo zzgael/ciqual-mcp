@@ -298,7 +298,7 @@ python -m pytest tests/test_functional.py -v
 
 ## Credits
 
-Developed by **Gael Debost** as part of a multi-LLM interface for medical research developed by [Ideagency](https://ideagency.fr).
+Developed by **Gael Debost** as part of GPT Workbench, a multi-LLM interface for medical research developed by [Ideagency](https://ideagency.fr).
 
 Data provided by ANSES (Agence nationale de sécurité sanitaire de l'alimentation, de l'environnement et du travail).
 
