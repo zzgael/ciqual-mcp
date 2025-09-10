@@ -1,10 +1,10 @@
 [project]
 name = "ciqual-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP server for ANSES Ciqual French food composition database with SQL interface"
 readme = "README.md"
 license = {text = "MIT"}
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 authors = [
     {name = "GPT Workbench Team", email = "contact@gpt-workbench.com"}
 ]
@@ -14,7 +14,6 @@ classifiers = [
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
