@@ -116,6 +116,64 @@ conn = sqlite3.connect("~/.ciqual/ciqual.db")
 cursor = conn.execute("SELECT * FROM foods WHERE alim_nom_eng LIKE '%apple%'")
 ```
 
+## API Documentation
+
+### MCP Function: `query`
+
+The server exposes a single MCP function for executing SQL queries on the Ciqual database.
+
+#### Function Signature
+```python
+async def query(sql: str) -> list[dict]
+```
+
+#### Parameters
+- **`sql`** (string, required): The SQL query to execute on the database
+  - Must be a SELECT or WITH query (read-only access)
+  - Supports all standard SQLite SQL syntax
+  - Can use JOIN, GROUP BY, ORDER BY, etc.
+  - Supports full-text search via the `foods_fts` table
+
+#### Returns
+- **`list[dict]`**: Array of result rows, where each row is a dictionary with column names as keys
+  - Empty list if no results match the query
+  - Error dictionary with `"error"` key if query fails
+
+#### Error Handling
+The function returns an error dictionary in these cases:
+- Database not initialized: `{"error": "Database not initialized..."}`
+- Non-SELECT query attempted: `{"error": "Only SELECT queries are allowed for safety."}`
+- SQL syntax error: `{"error": "SQL error: [details]"}`
+- Table not found: `{"error": "Table not found. Available tables: foods, nutrients, composition, foods_fts, food_groups"}`
+
+#### Example Usage in MCP Context
+```json
+{
+  "method": "query",
+  "params": {
+    "sql": "SELECT f.alim_nom_eng, n.const_nom_eng, c.teneur, n.unit FROM foods f JOIN composition c ON f.alim_code = c.alim_code JOIN nutrients n ON c.const_code = n.const_code WHERE f.alim_nom_eng LIKE '%apple%' AND n.const_code IN (328, 25000, 31000)"
+  }
+}
+```
+
+#### Response Example
+```json
+[
+  {
+    "alim_nom_eng": "Apple, raw",
+    "const_nom_eng": "Energy",
+    "teneur": 52.0,
+    "unit": "kcal/100g"
+  },
+  {
+    "alim_nom_eng": "Apple, raw",
+    "const_nom_eng": "Protein",
+    "teneur": 0.3,
+    "unit": "g/100g"
+  }
+]
+```
+
 ## Database Schema
 
 ### Tables
