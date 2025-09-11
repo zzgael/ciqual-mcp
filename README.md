@@ -90,9 +90,6 @@ command = "uvx"
 args = ["ciqual-mcp"]
 ```
 
-### ChatGPT Desktop (Pro/Team/Enterprise)
-
-MCP support in ChatGPT Desktop is currently limited to Deep Research functionality. Configuration varies by platform and is managed through the ChatGPT interface.
 
 ## Usage
 
