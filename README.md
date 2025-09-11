@@ -65,33 +65,13 @@ Add to your Claude Desktop configuration:
 }
 ```
 
-### Zed
+### Gemini CLI
 
-Add to your Zed settings:
-
-```json
-{
-  "assistant": {
-    "version": "2",
-    "mcp": {
-      "servers": {
-        "ciqual": {
-          "command": "uvx",
-          "args": ["ciqual-mcp"]
-        }
-      }
-    }
-  }
-}
-```
-
-### Cline (VSCode Extension)
-
-Add to your VSCode settings (`settings.json`):
+Add to your Gemini CLI configuration file `~/.gemini/settings.json`:
 
 ```json
 {
-  "cline.mcpServers": {
+  "mcpServers": {
     "ciqual": {
       "command": "uvx",
       "args": ["ciqual-mcp"]
@@ -100,21 +80,19 @@ Add to your VSCode settings (`settings.json`):
 }
 ```
 
-### Continue.dev
+### Codex CLI
 
-Add to your Continue config (`~/.continue/config.json`):
+Add to your Codex CLI configuration file `~/.codex/config.toml`:
 
-```json
-{
-  "mcpServers": [
-    {
-      "name": "ciqual",
-      "command": "uvx",
-      "args": ["ciqual-mcp"]
-    }
-  ]
-}
+```toml
+[mcp_servers.ciqual]
+command = "uvx"
+args = ["ciqual-mcp"]
 ```
+
+### ChatGPT Desktop (Pro/Team/Enterprise)
+
+MCP support in ChatGPT Desktop is currently limited to Deep Research functionality. Configuration varies by platform and is managed through the ChatGPT interface.
 
 ## Usage
 
