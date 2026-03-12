@@ -27,63 +27,95 @@ DB_PATH = Path.home() / ".ciqual" / "ciqual.db"
 
 @mcp.tool()
 async def query(sql: str) -> list[dict]:
-    """Execute SQL query on ANSES Ciqual French food composition database.
+    """Execute read-only SQL on ANSES Ciqual French food composition database (~3100 foods, 67 nutrients).
 
-    ⚠️ EFFICIENCY: Follow this 2-step workflow to minimize queries!
+    ⚠️ USE MAX 2 QUERIES. Most tasks need only 1. NEVER query one nutrient at a time.
 
-    STEP 1 - SEARCH (one query):
-    SELECT alim_code, alim_nom_fr FROM foods_fts WHERE foods_fts MATCH 'steak OR boeuf';
-    Note: FTS uses OR between words. For "steak sauce poivre", search "steak" first.
+    === ONE-QUERY PATTERNS (preferred) ===
 
-    STEP 2 - GET ALL NUTRIENTS (one query with JOIN):
-    SELECT f.alim_nom_fr, n.const_nom_fr, c.teneur, n.unit
-    FROM foods f
+    SEARCH + ALL NUTRIENTS IN ONE QUERY (use this!):
+    SELECT f.alim_code, f.alim_nom_fr, f.alim_nom_eng, f.alim_nom_sci,
+           n.const_nom_fr, n.code_infoods, c.teneur, c.min, c.max, n.unit, c.code_confiance
+    FROM foods_fts fts
+    JOIN foods f ON f.alim_code = fts.alim_code
     JOIN composition c ON f.alim_code = c.alim_code
     JOIN nutrients n ON c.const_code = n.const_code
-    WHERE f.alim_code = <code_from_step1>;
+    WHERE fts MATCH 'pomme'
+    ORDER BY f.alim_code, n.const_code LIMIT 200;
 
-    🛑 STOP after finding a matching food! Don't keep searching with different terms.
+    SEARCH MULTIPLE FOODS + SPECIFIC NUTRIENTS AT ONCE:
+    SELECT f.alim_code, f.alim_nom_fr, c.teneur, n.unit, n.const_nom_fr
+    FROM foods_fts fts
+    JOIN foods f ON f.alim_code = fts.alim_code
+    JOIN composition c ON f.alim_code = c.alim_code
+    JOIN nutrients n ON c.const_code = n.const_code
+    WHERE fts MATCH 'steak OR boeuf OR bœuf' AND c.const_code IN (328,25000,40000,31000)
+    ORDER BY f.alim_code;
 
-    COMPOUND DISHES (steak + sauce):
-    - CIQUAL has individual ingredients, not full recipes
-    - Search each component: "steak" then "sauce poivre"
-    - Sum the calories (typical portions: meat 150g, sauce 30g)
+    COMPARE FOODS ON KEY MACROS (single query):
+    SELECT f.alim_nom_fr,
+      MAX(CASE WHEN c.const_code=328 THEN c.teneur END) as kcal,
+      MAX(CASE WHEN c.const_code=25000 THEN c.teneur END) as protein_g,
+      MAX(CASE WHEN c.const_code=40000 THEN c.teneur END) as fat_g,
+      MAX(CASE WHEN c.const_code=31000 THEN c.teneur END) as carbs_g
+    FROM foods f JOIN composition c ON f.alim_code=c.alim_code
+    WHERE f.alim_code IN (2028,2003,3001) GROUP BY f.alim_code;
 
-    QUICK CALORIE LOOKUP (const_code 328 = kcal/100g):
-    SELECT f.alim_nom_fr, c.teneur as kcal_100g
-    FROM foods f JOIN composition c ON f.alim_code = c.alim_code
-    WHERE f.alim_code = <code> AND c.const_code = 328;
+    BROWSE BY FOOD GROUP/SUBGROUP:
+    SELECT f.alim_code, f.alim_nom_fr, g.alim_grp_nom_fr, g.alim_ssgrp_nom_fr
+    FROM foods f
+    JOIN food_groups g ON f.alim_grp_code = g.alim_grp_code
+      AND f.alim_ssgrp_code = g.alim_ssgrp_code
+      AND f.alim_ssssgrp_code = g.alim_ssssgrp_code
+    WHERE g.alim_grp_nom_fr LIKE '%fruit%';
 
-    KEY NUTRIENT CODES:
+    GET SOURCE/REFERENCE FOR A VALUE:
+    SELECT s.ref_citation FROM composition c
+    JOIN sources s ON c.source_code = s.source_code
+    WHERE c.alim_code = 2028 AND c.const_code = 328;
+
+    === FTS TIPS ===
+    - FTS tokenizes on diacritics: "pâte" matches "pate". Use OR: 'steak OR boeuf'.
+    - Prefix search: 'pomm*' matches pomme, pommeau, etc.
+    - alim_nom_sci (scientific name) is also indexed.
+    - Prefer French food names (alim_nom_fr) — they are more complete.
+
+    === COMPOUND DISHES ===
+    CIQUAL has ingredients, not recipes. Search each component separately and sum by portion weight (e.g. meat 150g, sauce 30g, bread 50g). You can search multiple components in one FTS query using OR.
+
+    === KEY NUTRIENT const_code VALUES ===
     Energy: 328 (kcal), 327 (kJ)
-    Macros: 25000 (protein), 31000 (carbs), 40000 (fat), 34100 (fiber), 32000 (sugars)
-    Minerals: 10110 (sodium), 10200 (calcium), 10260 (iron), 10190 (potassium), 10120 (magnesium)
-    Vitamins: 55100 (vit C), 52100 (vit D), 56600 (vit B12), 53100 (vit E), 56700 (folates)
+    Macros: 25000 (protein), 40000 (fat), 31000 (carbs), 32000 (sugars), 34100 (fiber)
+    Fat detail: 40400 (saturated FA), 40302 (monounsat FA), 40303 (polyunsat FA)
+    Minerals: 10110 (Na), 10200 (Ca), 10260 (Fe), 10190 (K), 10120 (Mg), 10530 (Zn)
+    Vitamins: 55100 (C), 52100 (D), 56600 (B12), 53100 (E), 56700 (folates/B9), 56100 (B6), 54100 (A retinol)
+    Other: 400 (water), 60000 (cholesterol), 75100 (alcohol)
 
-    SCHEMA:
-    - foods: alim_code (PK), alim_nom_fr, alim_nom_eng, alim_grp_code
-    - nutrients: const_code (PK), const_nom_fr, const_nom_eng, unit
-    - composition: alim_code, const_code, teneur (value per 100g), code_confiance
-    - food_groups: grp_code, grp_nom_fr, grp_nom_eng
-    - foods_fts: FTS5 virtual table for full-text search (alim_code, alim_nom_fr, alim_nom_eng)
+    === SCHEMA ===
+    foods(alim_code PK, alim_nom_fr, alim_nom_eng, alim_grp_code, alim_nom_sci, alim_ssgrp_code, alim_ssssgrp_code, facteur_Jones)
+    nutrients(const_code PK, const_nom_fr, const_nom_eng, unit, code_infoods)
+    composition(alim_code, const_code, teneur, code_confiance [A-D quality], min, max, source_code) PK(alim_code,const_code)
+    food_groups(alim_grp_code, alim_grp_nom_fr/eng, alim_ssgrp_code/nom, alim_ssssgrp_code/nom) PK(grp+ssgrp+ssssgrp)
+    sources(source_code PK, ref_citation)
+    foods_fts: FTS5(alim_code, alim_nom_fr, alim_nom_eng, alim_nom_sci) — use MATCH operator
     """
-    
+
     # Ensure database exists
     if not DB_PATH.exists():
         logger.warning("Database not found at %s", DB_PATH)
         return [{"error": "Database not initialized. Please run the server first to download data."}]
-    
+
     # Validate SQL query (basic safety check)
     sql_lower = sql.strip().lower()
     if not sql_lower.startswith(('select', 'with')):
         return [{"error": "Only SELECT queries are allowed for safety."}]
-    
+
     # Connect with read-only mode
     try:
         logger.debug("Executing query: %s", sql[:100] + '...' if len(sql) > 100 else sql)
         conn = sqlite3.connect(f"file:{DB_PATH}?mode=ro", uri=True)
         conn.row_factory = sqlite3.Row
-        
+
         # Execute query with timeout
         conn.execute("PRAGMA query_only = ON")
         conn.execute("PRAGMA temp_store = MEMORY")
@@ -91,11 +123,11 @@ async def query(sql: str) -> list[dict]:
         results = [dict(row) for row in cursor.fetchall()]
         logger.debug("Query returned %d rows", len(results))
         return results
-        
+
     except sqlite3.OperationalError as e:
         logger.error("SQL operational error: %s", e)
         if "no such table" in str(e):
-            return [{"error": f"Table not found. Available tables: foods, nutrients, composition, foods_fts, food_groups"}]
+            return [{"error": f"Table not found. Available tables: foods, nutrients, composition, foods_fts, food_groups, sources, metadata"}]
         elif "read-only" in str(e) or "readonly" in str(e):
             return [{"error": "Database is read-only. Only SELECT queries are allowed."}]
         else:
@@ -112,11 +144,11 @@ async def query(sql: str) -> list[dict]:
 
 def main():
     """Main entry point for the MCP server
-    
+
     Initializes the database if needed and starts the MCP server.
     """
     # Check and update database if needed
-    from data_loader import initialize_database
+    from data_loader import initialize_database, should_update_database
     import sqlite3
 
     def repair_fts5_if_corrupted():
@@ -159,7 +191,7 @@ def main():
                     # Rebuild FTS5 index
                     conn = sqlite3.connect(DB_PATH)
                     conn.execute("DELETE FROM foods_fts")
-                    conn.execute("INSERT INTO foods_fts SELECT alim_code, alim_nom_fr, alim_nom_eng FROM foods")
+                    conn.execute("INSERT INTO foods_fts SELECT alim_code, alim_nom_fr, alim_nom_eng, alim_nom_sci FROM foods")
                     conn.commit()
                     conn.close()
 
@@ -189,9 +221,13 @@ def main():
             initialize_database()
             logger.info("Database initialized successfully!")
             print("Database initialized successfully!", file=sys.stderr)
+        elif should_update_database(DB_PATH):
+            logger.info("New CIQUAL version available, updating database...")
+            print("New CIQUAL version available, updating database...", file=sys.stderr)
+            initialize_database()
+            logger.info("Database updated successfully!")
+            print("Database updated successfully!", file=sys.stderr)
         else:
-            # Disabled auto-update to prevent unnecessary rebuilds
-            # Database is static (ANSES data from 2020, no new updates expected)
             # Auto-repair FTS5 index if corrupted (e.g., from concurrent writes)
             repair_fts5_if_corrupted()
     except Exception as e:
@@ -202,7 +238,7 @@ def main():
         else:
             logger.warning("Failed to update database, using existing version: %s", e)
             print(f"Failed to update database, using existing version: {e}", file=sys.stderr)
-    
+
     logger.info("Starting Ciqual MCP server")
     print("Ciqual MCP server running", flush=True)
     try:

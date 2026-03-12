@@ -28,11 +28,11 @@ class TestCiqualFunctional(unittest.TestCase):
         
         # Insert test data
         conn.execute("""
-            INSERT INTO nutrients (const_code, const_nom_fr, const_nom_eng, unit)
-            VALUES 
-            (328, 'Energie', 'Energy', 'kcal/100g'),
-            (25000, 'Protéines', 'Protein', 'g/100g'),
-            (55400, 'Vitamine C', 'Vitamin C', 'mg/100g')
+            INSERT INTO nutrients (const_code, const_nom_fr, const_nom_eng, unit, code_infoods)
+            VALUES
+            (328, 'Energie', 'Energy', 'kcal/100g', 'ENER'),
+            (25000, 'Protéines', 'Protein', 'g/100g', 'PROT'),
+            (55400, 'Vitamine C', 'Vitamin C', 'mg/100g', 'VITC')
         """)
         
         conn.execute("""
@@ -57,7 +57,7 @@ class TestCiqualFunctional(unittest.TestCase):
         """)
         
         # Build FTS index
-        conn.execute("INSERT INTO foods_fts SELECT alim_code, alim_nom_fr, alim_nom_eng FROM foods")
+        conn.execute("INSERT INTO foods_fts SELECT alim_code, alim_nom_fr, alim_nom_eng, alim_nom_sci FROM foods")
         
         conn.commit()
         conn.close()
